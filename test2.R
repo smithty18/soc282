@@ -1,5 +1,5 @@
 # set working directory
-setwd("/Users/tylermsmith/Documents/MSU/2024/1. Spring/SOC282/research_project/1")
+setwd("/Users/tylermsmith/Documents/MSU/2024/Spring/SOC282/research_project/1")
 
 # load libraries
 library(tidyverse)
@@ -9,7 +9,7 @@ library(ggplot2)
 library(dplyr)
 
 # load gss22 data
-load("/Users/tylermsmith/Documents/MSU/2024/1. Spring/SOC282/r/GSS22.Rdata")
+load("/Users/tylermsmith/Documents/MSU/2024/Spring/SOC282/r/GSS22.Rdata")
 
 # clean the data further on the basis of 1 common dependent variable (depression) making a new sheet referred to as: gss22a.
 gss22a <- gss22 %>% 
@@ -56,10 +56,14 @@ ggplot(data = workhours, aes(x = gss22a.hrs1)) +
   geom_histogram(binwidth = 3, color = "black", fill = "white") + 
   labs(title = "Hours worked in a work week", x = "Hours worked", y = "Frequency")
 
-p <- hist_hours %>%
-  ggplot( aes(x=value, fill=type)) +
-  geom_histogram( color="#e9ecef", alpha=0.6, position = '') +
-  scale_fill_manual(values=c("#69b3a2", "#404080")) +
-  theme() +
-  labs(fill="white")
-p
+gss22a %>%
+  mutate(mntlhlth = case_when(
+    `mntlhlth(Self-report)` = 0 ~ "0",
+    `mntltlth(Self-report)` > 1 & `mntlhlth(Self-report)` < 3  ~ "1-3",
+    `mntlhlth(Self-report)` < 4 ~ "3+")
+
+    gss22a %>%
+      mutate(mntlhltha = case_when(
+        `mntlhltha` = 0 ~ "0",
+        `mntlhltha` > 0 ~ "1"))
+gss22a$mntlhltha <- as.factor(gss22a$mntlhlth)
