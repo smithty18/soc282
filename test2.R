@@ -56,14 +56,55 @@ ggplot(data = workhours, aes(x = gss22a.hrs1)) +
   geom_histogram(binwidth = 3, color = "black", fill = "white") + 
   labs(title = "Hours worked in a work week", x = "Hours worked", y = "Frequency")
 
+#### attempting to manipulate data; to recode from a continuous variable into a ordinal ####
 gss22a %>%
   mutate(mntlhlth = case_when(
-    `mntlhlth(Self-report)` = 0 ~ "0",
-    `mntltlth(Self-report)` > 1 & `mntlhlth(Self-report)` < 3  ~ "1-3",
-    `mntlhlth(Self-report)` < 4 ~ "3+")
+    `mntlhlth` = 0 ~ "0",
+    `mntlhlth` > 1 & `mntlhlth` < 3  ~ "1-3",
+    `mntlhlth` < 4 ~ "3+"))
 
     gss22a %>%
       mutate(mntlhltha = case_when(
         `mntlhltha` = 0 ~ "0",
         `mntlhltha` > 0 ~ "1"))
 gss22a$mntlhltha <- as.factor(gss22a$mntlhlth)
+
+#### messing with cross-tabs and chi squares with tidy-comm package ####
+
+mentalhealth %>%
+  mutate(gss22a$mntlhlth = case_when(
+    `gss22a$mntlhlth` = 0 ~ "0",
+    `gss22a$mntlhlth` > 1 ~ "1"))
+
+gss22$mntlhlthcat <- rep(1904, length(gss22$mntlhlth))
+#recode values of interest
+gss22$mntlhlthcat[gss22$mntlhlth = 0] <- "0"
+gss22$mntlhlthcat[gss22$mntlhlth < 1] <- "<1"
+#look at new variable
+gss22$mntlhlthcat
+summary(gss22$mntlhlthcat)
+
+## messing around with scatter plots of two variables
+ggplot(framehrs,
+       aes(x = gss22a.hrs1, y = gss22a.mntlhlth)) +
+  geom_point()
+
+
+## run tidycomm to be able to make crosstabs
+# !this package, more so the chi.sq functionality, seems to be unreliable!
+library(tidycomm)
+
+## make a frequency table of rates of depression across work status
+gss22a %>%
+crosstab(wrkstat, depress, add_total = TRUE)
+
+## make a frequency table of percentage rates of depression across work status
+gss22a %>%
+  crosstab(wrkstat, depress, add_total = TRUE, percentages = TRUE)
+
+## chi square
+gss22a %>%
+  crosstab(wrkstat, depress, add_total = TRUE, chi_square = TRUE)
+
+
+
