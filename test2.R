@@ -26,8 +26,6 @@ desctable.fast  <- describe(gss22a[ , c('wrkstat', 'hrs1', 'sex', 'mntlhlth', 'd
 ### drawn from the raw data set
 desctable.mnthlhlth.solo <- describe(gss22$mntlhlth, na.rm = TRUE, quant = c(.25,.75), IQR = TRUE)
 
-##recode continuous dependent variable mntlhlth into categories
-
 # make a data frame of hours worked
 workhours <- data.frame(gss22a$hrs1)
 
@@ -56,55 +54,68 @@ ggplot(data = workhours, aes(x = gss22a.hrs1)) +
   geom_histogram(binwidth = 3, color = "black", fill = "white") + 
   labs(title = "Hours worked in a work week", x = "Hours worked", y = "Frequency")
 
-#### attempting to manipulate data; to recode from a continuous variable into a ordinal ####
-gss22a %>%
-  mutate(mntlhlth = case_when(
-    `mntlhlth` = 0 ~ "0",
-    `mntlhlth` > 1 & `mntlhlth` < 3  ~ "1-3",
-    `mntlhlth` < 4 ~ "3+"))
-
-    gss22a %>%
-      mutate(mntlhltha = case_when(
-        `mntlhltha` = 0 ~ "0",
-        `mntlhltha` > 0 ~ "1"))
-gss22a$mntlhltha <- as.factor(gss22a$mntlhlth)
-
-#### messing with cross-tabs and chi squares with tidy-comm package ####
-
-mentalhealth %>%
-  mutate(gss22a$mntlhlth = case_when(
-    `gss22a$mntlhlth` = 0 ~ "0",
-    `gss22a$mntlhlth` > 1 ~ "1"))
-
-gss22$mntlhlthcat <- rep(1904, length(gss22$mntlhlth))
-#recode values of interest
-gss22$mntlhlthcat[gss22$mntlhlth = 0] <- "0"
-gss22$mntlhlthcat[gss22$mntlhlth < 1] <- "<1"
-#look at new variable
-gss22$mntlhlthcat
-summary(gss22$mntlhlthcat)
-
-## messing around with scatter plots of two variables
-ggplot(framehrs,
-       aes(x = gss22a.hrs1, y = gss22a.mntlhlth)) +
-  geom_point()
+#### recode continuous data into ordinal data
+## WIP ##
 
 
-## run tidycomm to be able to make crosstabs
-# !this package, more so the chi.sq functionality, seems to be unreliable!
-library(tidycomm)
+## make bivariate table(s)
+bivartable<- table(gss22a$depress, gss22a$wrkstat)
+bivartable
+coltable <- prop.table(bivartable, 2)
+coltable
+round(coltable, 2)
 
-## make a frequency table of rates of depression across work status
-gss22a %>%
-crosstab(wrkstat, depress, add_total = TRUE)
+#Separate bivariate tables by gender
+#make a new dataset that is Female only:
+femaledata <- gss22a[which(gss22a$sex==2), ]
+#use the same code as above to make a table with column percentages with the 
+# female only dataset this time:
+bivartablef <- table(femaledata$depress, femaledata$wrkstat)
+coltablef <- prop.table(bivartablef)
+round(coltablef, 2)
+#then do the same thing with a Male only dataset:
+maledata <- gss22a[which(gss22a$sex==1), ]
+bivartablem <- table(maledata$depress, maledata$wrkstat)
+coltablem <- prop.table(bivartablem)
+round(coltablem, 2)
 
-## make a frequency table of percentage rates of depression across work status
-gss22a %>%
-  crosstab(wrkstat, depress, add_total = TRUE, percentages = TRUE)
+## chi square test of bivariate table of depression and work status
+chisq.test(bivartable)
+## chi sq of bivartable controlled for sex, females
+chisq.test(bivartablef)
+## chi sq of bivartable controlled for sex, males
+chisq.test(bivartablem)
+## two sample t tests of bad mental health days and hours worked, sampled by sex
+t.test(femaledata$mntlhlth, maledata$mntlhlth)
+t.test(femaledata$hrs1, maledata$hrs1)
 
-## chi square
-gss22a %>%
-  crosstab(wrkstat, depress, add_total = TRUE, chi_square = TRUE)
+## anova
+oneway.test(mntlhlth ~ wrkstat, gss22a)
+oneway.test(mntlhlth ~ wrkstat, maledata)
+oneway.test(mntlhlth ~ wrkstat, femaledata)
 
+## regression ##
+plot(gss22a$mntlhlth, gss22a$hrs1, main="Days of poor mental health and hours worked.",
+     xlab = "Poor mental health", ylab="Work hours")
+#add a line of best fit
+abline(lm(gss22a$mntlhlth~gss22a$hrs1), col="red")
 
+#Bivariate Regression
+reg1 <- lm(mntlhlth ~ hrs1, gss22a)
+summary(reg1)
 
+## for female##
+plot(femaledata$mntlhlth, femaledata$hrs1, main="Days of poor mental health and hours worked for women.",
+     xlab = "Poor mental health", ylab="Work hours",
+      abline(lm(femaledata$mntlhlth~femaledata$hrs1), col="red"))
+
+reg2 <- lm(mntlhlth ~ hrs1, femaledata)
+summary(reg2)
+
+## for male##
+plot(maledata$mntlhlth, maledata$hrs1, main="Days of poor mental health and hours worked for men.",
+     xlab = "Poor mental health", ylab="Work hours",
+      abline(lm(maledata$mntlhlth~maledata$hrs1), col="red"))
+
+reg3 <- lm(mntlhlth ~ hrs1, maledata)
+summary(reg3)
