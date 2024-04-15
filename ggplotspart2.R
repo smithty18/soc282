@@ -99,6 +99,18 @@ ggplot(
     subtitle = "Depicting little association between variables.",
     x = "Hours worked", y = "Mental Health")
 
+## jitter plot
+ggplot(gss22a)+
+  aes(sexf, mntlhlth) +
+  geom_jitter() +
+  facet_wrap(~wrkstat) +
+  labs(
+    title = "Jitterplot of Mental Health by Gender",
+    subtitle = "",
+    x = "Sexf = 1(Male), 2(Female).",
+    y = "Poor days of mental health, range from 0-30."
+  )
+
 ##multi of dv and iv by sex
 ggplot(
   data = gss22a,
